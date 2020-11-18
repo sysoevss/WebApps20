@@ -1,0 +1,282 @@
+<html>
+<head>
+<link href="/static/style.css" rel="stylesheet">
+<script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+<script>
+
+	function appendNumber(accumulator, count, isRow) {
+		if (count == 0) return;
+		if (isRow) {
+			accumulator.append(count + ' ');
+		} else {
+			accumulator.append(count + '<br>');
+		}		
+	}
+
+	function calculate_counters(n, m) {
+		let columnsCounter = [];
+		for (let j = 0; j < m; j++) columnsCounter[j] = 0;
+		let field = jQuery("#field");
+		for (var i = 0; i < n; i++)
+			jQuery("#row" + i).html("");
+		for (var j = 0; j < m; j++)
+			jQuery("#column" + j).html("");
+		for (var i = 0; i < n; i++) {	// rows
+			// cell for row numbers
+			var rowCounter = 0;
+			for (var j = 0; j < m; j++) {	// cols
+				// alert(jQuery("#"+i+"."+j));
+				let cell = jQuery("#"+i+"\\."+j);
+				if (cell.hasClass("marked")) {
+					//alert(rowCounter);
+					rowCounter++;
+					columnsCounter[j]++;
+				} else {
+					appendNumber(jQuery("#row" + i), rowCounter, true);
+					appendNumber(jQuery("#column" + j), columnsCounter[j], false);
+					rowCounter = 0;
+					columnsCounter[j] = 0;
+				}
+			}
+			appendNumber(jQuery("#row" + i), rowCounter, true);
+		}
+
+		for (var j = 0; j < m; j++)
+			appendNumber(jQuery("#column" + j), columnsCounter[j], false);
+	}
+
+	function create_field(n, m, prob) {
+		// here we'll store column numbers
+		let columnsCounter = [];
+		for (let j = 0; j < m; j++) columnsCounter[j] = 0;
+
+		let field = jQuery("#field");
+
+		// 
+		// create cells for column numbers
+		//
+		field.append('<div style = "border: 1px solid #fff;" class="rowValue row"></div>');
+		for (var j = 0; j < m; j++) 
+			field.append('<div id ="column'+j+'" class="columnValue row"></div>');
+		field.append('<div class="row_end"></div>');
+
+		// 
+		// the FIELD
+		//
+		for (var i = 0; i < n; i++) {	// rows
+			// cell for row numbers
+			field.append('<div id = "row'+i+'"  class="rowValue row"></div>');
+			var rowCounter = 0;
+			for (var j = 0; j < m; j++) {	// cols
+				if (Math.random() < prob) {	
+					field.append('<div class="cell marked row" id="' + i + '.' + j + '"></div>')
+					rowCounter++;
+					columnsCounter[j]++;
+				} else {
+					field.append('<div class="cell empty row" id="' + i + '.' + j + '"></div>')
+					appendNumber(jQuery("#row" + i), rowCounter, true);
+					appendNumber(jQuery("#column" + j), columnsCounter[j], false);
+					rowCounter = 0;
+					columnsCounter[j] = 0;
+				}
+			}
+			appendNumber(jQuery("#row" + i), rowCounter, true);
+			field.append('<div class="row_end"></div>');
+		}
+
+		for (var j = 0; j < m; j++)
+			appendNumber(jQuery("#column" + j), columnsCounter[j], false);
+	}
+
+	function empty_field() {
+		jQuery(".cell").removeClass("marked").addClass("empty");
+	}
+
+	function set_handlers(){
+		jQuery(".cell").click(function() {
+			if (jQuery(this).hasClass("empty")) {
+				jQuery(this).removeClass("empty");
+				jQuery(this).addClass("marked");
+			} else if (jQuery(this).hasClass("marked")) {
+				jQuery(this).removeClass("marked");
+				jQuery(this).addClass("point");
+			} else {
+				jQuery(this).removeClass("point");
+				jQuery(this).addClass("empty");
+			}
+			let id = jQuery(this).attr("id").split('.');
+			field_arr[id[0]][id[1]]= (field_arr[id[0]][id[1]] + 1) % 3;
+			if(check_field()) jQuery("#game_over").html("Congratulations! You WIN!");
+		});
+	}
+
+	function check_field(){
+		for(var r = 0; r < fieldN; r++){
+			if(!check_row(r, true)) return false;
+		}
+		for(var r = 0; r < fieldM; r++){
+			if(!check_row(r, false)) return false;
+		}
+		return true;
+	}
+
+	function check_row(num, isRow){
+		let targets = [];
+		if (isRow)
+			targets = jQuery("#row" + num).html().split(' ');
+		else
+			targets = jQuery("#column" + num).html().split('<br>');
+		targets.pop();
+
+		let curr_st = 0;
+		let marked_count = 0;
+		let curr_targ = 0;
+
+		let i = fieldM - 1;
+		if (!isRow) i = fieldN - 1;
+
+		for(i; i >= 0; i--){
+			let curr_cell = 0;
+			if (isRow) curr_cell = field_arr[num][i];
+			else curr_cell = field_arr[i][num];
+			
+		 	if(curr_st == 0){
+		 		if (curr_cell % 2 == 0) continue;
+		 		
+		 		curr_st = 1;
+		 		marked_count = 1;
+		 		if(targets.length == 0){
+		 			return false;
+		 		}
+		 		curr_targ = targets.pop();
+		 		curr_targ--;
+		 	} else {
+		 		if (curr_cell % 2 == 0){
+		 			curr_st = 0;
+		 			if(curr_targ > 0){
+		 				return false;
+		 			}
+		 		} else {
+		 			curr_targ--;
+		 			if(curr_targ < 0){
+		 				return false;
+		 			}
+		 		}
+		 	}
+		 }
+		 if(targets.length > 0 || curr_targ > 0) return false;
+		 return true;
+	}
+
+	function generate_field(probability) {
+		create_field(fieldN, fieldM, probability);
+		for (var i = 0; i < fieldN; i++) {
+			var r = [];
+			for(var j = 0; j < fieldM; j++){
+				r.push(0);
+			}
+			field_arr.push(r);
+		}
+		empty_field();
+		set_handlers();
+	}
+
+	function upload() {
+		jQuery.post( "create", 
+					{ width: fieldN, height: fieldM, name: jQuery("#field_name").val(), nonogram: jQuery("#field").html()},
+					function( data ) {
+  									jQuery.get("get_list", function (data) {
+										jQuery("#field_list").html(data)});;
+									});
+
+	}
+	function clear_field() {
+		jQuery("#field").html("");
+	}
+
+	fieldN = 5;
+	fieldM = 5;
+	field_arr = [];
+	PROBABILITY_OF_MARKED = 0.33;
+	const Mode = {
+		Solving: 0,
+		Creating: 1
+	};
+	MODE = Mode.Solving;
+
+	//
+	//	ENTRY POINT
+	//
+	jQuery(window).on("load", function() {
+		generate_field(PROBABILITY_OF_MARKED);
+		jQuery(".button").click(function() {
+			jQuery(".button").removeClass("active");
+			jQuery(this).addClass("active");
+		});
+		jQuery("#button_generate").click(function() {
+			clear_field();
+			MODE = Mode.Solving;
+			generate_field(PROBABILITY_OF_MARKED);
+		});
+		jQuery("#button_create").click(function() {
+			if (MODE == Mode.Creating) {
+				// alert("upload");
+				calculate_counters(fieldN, fieldM);
+				let nono_name = jQuery("#field_name").val();
+				if(jQuery.trim(nono_name).length == 0) {
+					alert("Enter name!")
+					return;
+				}
+				upload();
+				jQuery("#button_generate").click();
+				jQuery(this).html("Create");
+			} else {
+				clear_field();
+				MODE = Mode.Creating;
+				jQuery(this).html("Upload");
+				generate_field(0.0);
+			}
+		});
+		jQuery("#field_width").on("change", function() {
+			fieldM = jQuery(this).val();
+		});
+		jQuery("#field_height").on("change", function() {
+			fieldN = jQuery(this).val();
+		});
+
+		jQuery.get("get_list", function (data) {
+			jQuery("#field_list").html(data)});
+	});
+</script>
+</head>
+
+<body>
+	<table class="newspaper-a">
+		<thead>
+			<th></th>
+			<th>
+				<div><h1 id="game_over">this game has no name</h1></div>
+			</th>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					Width:<input type="number" min="2" value="5" id="field_width"></input>
+					Height:<input type="number" min="2" value="5" id="field_height"></input>
+					Name:<input type="text" id="field_name"></input>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div id="button_generate" class="button active">Generate</div>
+					<div id="button_create" class="button">Create</div>
+					<div id="button_load" class="button"></div>
+				</td>
+				<td style="width:70%;"><div id="field"></div></td>
+				<td style="width:20%;"><div id="field_list"></div></td>
+			</tr>
+
+		</tbody>
+	</table>
+</body>
+</html>

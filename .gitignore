@@ -1,0 +1,9 @@
+
+# logs
+*.log
+
+# directories
+# =========================
+
+__pycache__/
+sessions/
