@@ -181,6 +181,12 @@
 		set_handlers();
 	}
 
+	function get_nonogram(id) {
+		jQuery.post( "get_nonogram",
+					{ id: id },
+					function( data ) { jQuery("#field").html(data); })
+	}
+
 	function upload() {
 		jQuery.post( "create", 
 					{ width: fieldN, height: fieldM, name: jQuery("#field_name").val(), nonogram: jQuery("#field").html()},
