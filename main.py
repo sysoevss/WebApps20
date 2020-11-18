@@ -67,13 +67,31 @@ class Root(object):
             ret_string = ""
             rows = cursor.fetchall()
             for nonogram in rows:
-                ret_string += "<div>"+str(nonogram[1])+"</div>"
+                ret_string += "<div onclick='get_nonogram(" + str(nonogram[0]) + ")' id='" + str(nonogram[0]) + "'>" + str(nonogram[1])+"</div>"
 
             return ret_string
         except Exception as e:
             cherrypy.log("Create handler. Failure!", traceback=True)
             return error_page(str(e))
 
+    @cherrypy.expose
+    def get_nonogram(self, id):
+        try:
+            cnx = mysql.connector.connect(user=settings.user,
+                                          password=settings.password,
+                                          host=settings.host,
+                                          database=settings.database)
+            cnx.autocommit = True
+            cursor = cnx.cursor()
+            query = "SELECT json FROM nonograms WHERE id = %s"
+            cursor.execute(query, [id])
+
+            rows = cursor.fetchall()
+
+            return rows[0][0]
+        except Exception as e:
+            cherrypy.log("Get nonogramm. Failure!", traceback=True)
+            return error_page(str(e))
 
 if __name__ == '__main__':
     cherrypy.config.update({'server.socket_host': server_host, 'server.socket_port': server_port,})
