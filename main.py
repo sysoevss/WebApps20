@@ -7,6 +7,8 @@ import settings
 import os, os.path
 import types
 import json
+import zlib
+import base64
 
 from Cheetah.Template import Template
 from datetime import date
@@ -46,7 +48,8 @@ class Root(object):
             cnx.autocommit = True
             cursor = cnx.cursor()
             query = "INSERT INTO nonograms (json, name, width, height) VALUES (%s, %s, %s, %s)"
-            cursor.execute(query, [nonogram, name, width, height])
+            encoded_nonogram = base64.b64encode(zlib.compress(nonogram.encode()))
+            cursor.execute(query, [encoded_nonogram, name, width, height])
             return str(cursor.lastrowid)
         except Exception as e:
             cherrypy.log("Create handler. Failure!", traceback=True)
@@ -88,7 +91,7 @@ class Root(object):
 
             rows = cursor.fetchall()
 
-            return rows[0][0]
+            return zlib.decompress(base64.b64decode(rows[0][0]))
         except Exception as e:
             cherrypy.log("Get nonogramm. Failure!", traceback=True)
             return error_page(str(e))
