@@ -67,10 +67,20 @@ class Root(object):
             query = "SELECT id, name FROM nonograms"
             cursor.execute(query, [])
             
-            ret_string = ""
+            ret_string = \
+                "<div class=\"has-text-centered has-text-black is-size-5\">"\
+                    "Try to solve this:"\
+                "</div>"\
+                "<div class=\"buttons\">"
             rows = cursor.fetchall()
             for nonogram in rows:
-                ret_string += "<div onclick='get_nonogram(" + str(nonogram[0]) + ")' id='" + str(nonogram[0]) + "'>" + str(nonogram[1])+"</div>"
+                id = str(nonogram[0])
+                name = str(nonogram[1])
+                ret_string += \
+                    "<a class=\"button is-info is-fullwidth\""\
+                        "onclick='get_nonogram(" + id + ")' id='" + id + "'>" + name \
+                    + "</a>"
+            ret_string += "</div>"
 
             return ret_string
         except Exception as e:
