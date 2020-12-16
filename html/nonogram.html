@@ -189,7 +189,7 @@
 	function get_nonogram(id) {
 		jQuery.post( "get_nonogram",
 					{ id: id },
-					function( data ) { jQuery("#field").html(data); })
+					function( data ) { jQuery("#field").html(data); empty_field(); set_handlers();})
 	}
 
 	function upload() {
@@ -222,6 +222,7 @@
 		generate_field(PROBABILITY_OF_MARKED);
 		jQuery("#button_generate").click(function() {
 			clear_field();
+			jQuery("#button_create").html("Create");
 			MODE = Mode.Solving;
 			generate_field(PROBABILITY_OF_MARKED);
 		});
@@ -236,7 +237,6 @@
 				}
 				upload();
 				jQuery("#button_generate").click();
-				jQuery(this).html("Create");
 			} else {
 				clear_field();
 				MODE = Mode.Creating;
